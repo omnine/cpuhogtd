@@ -2,23 +2,24 @@ package com.omnine.agent;
 
 import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.Executors;
+
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
 
 public class CPUMonitor {
     private final OperatingSystemMXBean osBean;
     private final ScheduledExecutorService scheduler;
+    private volatile boolean running = true; // Step 1: Volatile flag
 
     public CPUMonitor() {
         this.osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        this.scheduler = Executors.newScheduledThreadPool(1);
+
     }
 
     public void startMonitoring() {
         new Thread(() -> {
             try {
-                while (!Thread.currentThread().isInterrupted()) {
+                while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
                     System.out.printf("Process CPU Load: %.2f%%%n", processCpuLoad);
                     
@@ -34,6 +35,7 @@ public class CPUMonitor {
     }
 
     public void stopMonitoring() {
-        scheduler.shutdown();
+        running = false; // Step 3: Stop the monitoring
+
     }
 }
