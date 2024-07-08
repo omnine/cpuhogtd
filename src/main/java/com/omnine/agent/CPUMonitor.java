@@ -11,13 +11,15 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Map;
 import org.json.JSONObject;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
 
 public class CPUMonitor {
+    private static final Logger logger = LoggerFactory.getLogger(CPUMonitor.class);
+
     private double CPU_THRESHOLD = 50.0;
     private long CHECK_INTERVAL_MS = 60000;	// 1 minute
     private long AGGRESSIVE_INTERVAL_MS = 10000;	// 10 seconds
@@ -55,6 +57,7 @@ public class CPUMonitor {
             try {
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
+                    logger.info("Current Process CPU Load: {}%", processCpuLoad);
 
                     if (processCpuLoad >= CPU_THRESHOLD) {
                         bAlarmOn = true;
