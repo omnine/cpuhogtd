@@ -2,7 +2,7 @@ package com.omnine.agent;
 
 import java.lang.instrument.Instrumentation;
 
-public class MyAgent {
+public class NanoAgent {
     private static CPUMonitor cpuMonitor;
 
     public static void premain(String agentArgs, Instrumentation inst) {

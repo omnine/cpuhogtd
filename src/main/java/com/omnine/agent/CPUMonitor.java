@@ -6,17 +6,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Map;
+import org.json.JSONObject;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import java.util.concurrent.TimeUnit;
 
 
 public class CPUMonitor {
-    private static final double CPU_THRESHOLD = 50.0;
-    private static final long CHECK_INTERVAL_MS = 60000;	// 1 minute
-    private static final long AGGRESSIVE_INTERVAL_MS = 10000;	// 10 seconds
-    private static final double CONCERN_THRESHOLD = 12;	//	ABOUT last 2 minutes
+    private double CPU_THRESHOLD = 50.0;
+    private long CHECK_INTERVAL_MS = 60000;	// 1 minute
+    private long AGGRESSIVE_INTERVAL_MS = 10000;	// 10 seconds
+    private double CONCERN_THRESHOLD = 12;	//	ABOUT last 2 minutes
     private final OperatingSystemMXBean osBean;
     private volatile boolean running = true; // Step 1: Volatile flag
     private boolean bAlarmOn = false;
@@ -26,7 +31,23 @@ public class CPUMonitor {
     int concern = 0;
     public CPUMonitor() {
         this.osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        loadConfig();
 
+    }
+
+    private void loadConfig() {
+        try {
+            String content = new String(Files.readAllBytes(Paths.get("config.json")));
+            JSONObject json = new JSONObject(content);
+
+            CPU_THRESHOLD = json.getDouble("CPU_THRESHOLD");
+            CHECK_INTERVAL_MS = json.getLong("CHECK_INTERVAL_MS");
+            AGGRESSIVE_INTERVAL_MS = json.getLong("AGGRESSIVE_INTERVAL_MS");
+            CONCERN_THRESHOLD = json.getDouble("CONCERN_THRESHOLD");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Handle error or set default values
+        }
     }
 
     public void startMonitoring() {
