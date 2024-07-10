@@ -20,6 +20,23 @@
                     <target>8</target>
                 </configuration>
             </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.2.4</version> <!-- Use the latest version available -->
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <!-- Optional: if you want to minimize the jar -->
+                        <minimizeJar>true</minimizeJar>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>            
         </plugins>
     </build>
     <dependencies>

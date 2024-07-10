@@ -124,35 +124,33 @@ public class CPUMonitor {
 
 
 
-        ThreadInfo[] t = threadMxBean.dumpAllThreads(false, false);
+        ThreadInfo[] tis = threadMxBean.dumpAllThreads(false, false);
 
-        for (int i = 0; i < t.length; i++) 
+        for (int i = 0; i < tis.length; i++) 
         {
-            if(t[i].getThreadState() != Thread.State.RUNNABLE)
+            if(tis[i].getThreadState() != Thread.State.RUNNABLE)
             {
                 continue;
             }
 
 
-            long id = t[i].getThreadId();
+            long id = tis[i].getThreadId();
             Long idid = new Long(id);
             long current = threadMxBean.getThreadCpuTime(id);
-            if(current == -1)
+            if(current < 0)
             {
                 continue;
             }
             long now = System.currentTimeMillis();
             if (lastCPUTimes.get(idid) != null)
             {
-
                 long prev = (Long) lastCPUTimes.get(idid);
-                current = threadMxBean.getThreadCpuTime(t[i].getThreadId());
                 long catchTime = (Long) lastCPUTimeFetch.get(idid);
                 double percent = (current - prev) / ((now - catchTime) * cpus * 10000);
-                if (percent > 0 && prev > 0)
+                if (percent > 0)    // only check the increase
                 {
-                    logger.info("Thread: {} | CPU Usage: {}% | CPU Time: {}%", t[i].getThreadName(), percent, current);
-                    for (StackTraceElement ste : t[i].getStackTrace()) {
+                    logger.info("Thread: {} | CPU Usage: {}% | CPU Time: {}%", tis[i].getThreadName(), percent, current);
+                    for (StackTraceElement ste : tis[i].getStackTrace()) {
                         logger.info("at {}", ste);
                     }
                 }
