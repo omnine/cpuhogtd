@@ -5,10 +5,12 @@ import com.sun.management.OperatingSystemMXBean;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,12 @@ public class CPUMonitor {
     private boolean bAlarmOn = false;
 
     private double lastProcessCpuLoad = -1;
+
+    static Map<Long, Long> cpuTimes = new HashMap<>();
+    static Map<Long, Long> lastCPUTimes = new HashMap<>();
+    static Map<Long, Long> cpuTimeFetch = new HashMap<>();
+    static Map<Long, Long> lastCPUTimeFetch = new HashMap<>();
+
     
     int concern = 0;
     public CPUMonitor() {
@@ -47,8 +55,9 @@ public class CPUMonitor {
             AGGRESSIVE_INTERVAL_MS = json.getLong("AGGRESSIVE_INTERVAL_MS");
             CONCERN_THRESHOLD = json.getDouble("CONCERN_THRESHOLD");
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             // Handle error or set default values
+            logger.warn("Error loading config file. Using default values.");
         }
     }
 
@@ -103,20 +112,64 @@ public class CPUMonitor {
     }
     private static void captureThreadDump() throws IOException {
         ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
-        Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
-
-        try (FileWriter writer = new FileWriter("thread-dump-" + LocalDateTime.now() + ".txt")) {
-            for (Map.Entry<Thread, StackTraceElement[]> entry : allStackTraces.entrySet()) {
-                Thread thread = entry.getKey();
-                StackTraceElement[] stackTraceElements = entry.getValue();
-
-                writer.write("Thread: " + thread.getName() + " - State: " + thread.getState() + "\n");
-                for (StackTraceElement element : stackTraceElements) {
-                    writer.write("\tat " + element + "\n");
-                }
-                writer.write("\n");
-            }
+        // Check and enable CPU time measurement if supported
+        if (threadMxBean.isThreadCpuTimeSupported()) {
+            threadMxBean.setThreadCpuTimeEnabled(true);
         }
+        else {
+            logger.warn("Thread CPU time measurement is not supported.");
+        }
+
+        long cpus = Runtime.getRuntime().availableProcessors();
+
+
+
+        ThreadInfo[] t = threadMxBean.dumpAllThreads(false, false);
+
+        for (int i = 0; i < t.length; i++) 
+        {
+            if(t[i].getThreadState() != Thread.State.RUNNABLE)
+            {
+                continue;
+            }
+
+
+            long id = t[i].getThreadId();
+            Long idid = new Long(id);
+            long current = threadMxBean.getThreadCpuTime(id);
+            if(current == -1)
+            {
+                continue;
+            }
+            long now = System.currentTimeMillis();
+            if (lastCPUTimes.get(idid) != null)
+            {
+
+                long prev = (Long) lastCPUTimes.get(idid);
+                current = threadMxBean.getThreadCpuTime(t[i].getThreadId());
+                long catchTime = (Long) lastCPUTimeFetch.get(idid);
+                double percent = (current - prev) / ((now - catchTime) * cpus * 10000);
+                if (percent > 0 && prev > 0)
+                {
+                    logger.info("Thread: {} | CPU Usage: {}% | CPU Time: {}%", t[i].getThreadName(), percent, current);
+                    for (StackTraceElement ste : t[i].getStackTrace()) {
+                        logger.info("at {}", ste);
+                    }
+                }
+            }
+            cpuTimes.put(idid, current);  // new
+            cpuTimeFetch.put(idid, now);
+        }
+
+        //This would not cause memory problem.
+        lastCPUTimes.clear();
+        lastCPUTimes.putAll(cpuTimes);
+        cpuTimes.clear();
+
+        lastCPUTimeFetch.clear();
+        lastCPUTimeFetch.putAll(cpuTimeFetch);
+        cpuTimeFetch.clear();
+
 
         System.out.println("Thread dump captured.");
     }    
