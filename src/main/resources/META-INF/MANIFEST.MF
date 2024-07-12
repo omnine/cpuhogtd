@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Premain-Class: com.omnine.agent.NanoAgent
+Premain-Class: com.omnine.agent.AgentPremain
