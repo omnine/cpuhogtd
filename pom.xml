@@ -35,6 +35,10 @@
                         <minimizeJar>false</minimizeJar>
                         <relocations>
                             <relocation>
+                                <pattern>ch.qos.logback</pattern>
+                                <shadedPattern>org.glowroot.agent.shaded.ch.qos.logback</shadedPattern>
+                            </relocation>
+                            <relocation>
                                 <pattern>org.json</pattern>
                                 <shadedPattern>com.omnine.agent.shaded.org.json</shadedPattern>
                             </relocation>
