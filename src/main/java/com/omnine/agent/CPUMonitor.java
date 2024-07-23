@@ -77,7 +77,7 @@ public class CPUMonitor {
                         
                         if(concern >= CONCERN_THRESHOLD) {
                             try {
-                                captureThreadDump();
+                                captureThreadDump(Thread.currentThread().getId());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -90,7 +90,7 @@ public class CPUMonitor {
                     
                     lastProcessCpuLoad = processCpuLoad;
                     
-                    if(bAlarmOn) {	// check it more agressively
+                    if(bAlarmOn) {	// check it more aggressively
                         TimeUnit.MILLISECONDS.sleep(AGGRESSIVE_INTERVAL_MS);
                     }
                     else {
@@ -110,7 +110,7 @@ public class CPUMonitor {
         running = false; // Step 3: Stop the monitoring
 
     }
-    private static void captureThreadDump() throws IOException {
+    private static void captureThreadDump(long idMonitorThread) throws IOException {
         ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
         // Check and enable CPU time measurement if supported
         if (threadMxBean.isThreadCpuTimeSupported()) {
@@ -135,6 +135,11 @@ public class CPUMonitor {
 
 
             long id = tis[i].getThreadId();
+            if(id == idMonitorThread)
+            {   // skip the monitoring thread
+                continue;
+            }
+
             Long idid = new Long(id);
             long current = threadMxBean.getThreadCpuTime(id);
             if(current < 0)
