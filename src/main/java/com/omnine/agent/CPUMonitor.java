@@ -2,14 +2,14 @@ package com.omnine.agent;
 
 import com.sun.management.OperatingSystemMXBean;
 
-import java.io.FileWriter;
+
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONObject;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 
 public class CPUMonitor {
-    private static final Logger logger = LoggerFactory.getLogger(CPUMonitor.class);
+    private static final Logger logger = LoggerFactory.getLogger(CPUMonitor.class); 
 
     private double CPU_THRESHOLD = 50.0;
     private long CHECK_INTERVAL_MS = 60000;	// 1 minute

@@ -1,11 +1,11 @@
 package com.omnine.agent;
 
 import java.io.File;
-import java.io.IOException;
+
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Method;
+
 import java.security.CodeSource;
-import java.util.jar.JarFile;
+
 // this class is registered as the Premain-Class in the MANIFEST.MF of this jar
 //
 // this class should have minimal dependencies since it will live in the system class loader while
@@ -17,6 +17,16 @@ public class AgentPremain {
 
     public static void premain(String agentArgs, Instrumentation instrumentation) {
         System.out.println("NanoAgent is running");
+
+        try {
+            CodeSource codeSource = CPUMonitor.class.getProtectionDomain().getCodeSource();
+            File jarFile = new File(codeSource.getLocation().toURI().getPath());
+            String jarDir = jarFile.getParentFile().getPath();
+//            System.err.println("JAR directory: " + jarDir);
+            System.setProperty("agent.jar.dir", jarDir);
+        } catch (Exception e) {
+            System.err.println("Failed to determine JAR directory");
+        }        
 
 
         cpuMonitor = new CPUMonitor();
