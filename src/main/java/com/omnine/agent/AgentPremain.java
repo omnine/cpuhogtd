@@ -24,21 +24,26 @@ public class AgentPremain {
             String jarDir = jarFile.getParentFile().getPath();
 //            System.err.println("JAR directory: " + jarDir);
             System.setProperty("agent.jar.dir", jarDir);
+
+            cpuMonitor = new CPUMonitor();
+            cpuMonitor.loadConfig(jarDir);
+            cpuMonitor.startMonitoring();
+    
+            // Add a shutdown hook to stop the CPU monitoring when the application exits
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (cpuMonitor != null) {
+                    cpuMonitor.stopMonitoring();
+                    System.out.println("CPU Monitoring stopped.");
+                }
+            }));
+
+
         } catch (Exception e) {
             System.err.println("Failed to determine JAR directory");
         }        
 
 
-        cpuMonitor = new CPUMonitor();
-        cpuMonitor.startMonitoring();
 
-        // Add a shutdown hook to stop the CPU monitoring when the application exits
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (cpuMonitor != null) {
-                cpuMonitor.stopMonitoring();
-                System.out.println("CPU Monitoring stopped.");
-            }
-        }));
 
 
 

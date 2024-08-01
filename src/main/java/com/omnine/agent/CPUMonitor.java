@@ -41,13 +41,11 @@ public class CPUMonitor {
     int concern = 0;
     public CPUMonitor() {
         this.osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        loadConfig();
-
     }
 
-    private void loadConfig() {
+    public void loadConfig(String jarDir) {
         try {
-            String content = new String(Files.readAllBytes(Paths.get("config.json")));
+            String content = new String(Files.readAllBytes(Paths.get(jarDir + "/config.json")));
             JSONObject json = new JSONObject(content);
 
             CPU_THRESHOLD = json.getDouble("CPU_THRESHOLD");
@@ -57,7 +55,7 @@ public class CPUMonitor {
         } catch (Exception e) {
 //            e.printStackTrace();
             // Handle error or set default values
-            logger.warn("Error loading config file. Using default values.");
+            logger.warn("Error loading config file. Use the default values.");
         }
     }
 
