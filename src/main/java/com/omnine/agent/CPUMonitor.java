@@ -152,7 +152,7 @@ public class CPUMonitor {
                 double percent = (current - prev) / ((now - catchTime) * cpus * 10000);
                 if (percent > 0)    // only check the increase
                 {
-                    logger.info("Thread: {} | CPU Usage: {}% | CPU Time: {}%", tis[i].getThreadName(), percent, current);
+                    logger.info("[{}%] \"{}\" #{}  cpu={}ms elapsed={}ms", percent, tis[i].getThreadName(), id, (current-prev)/1000000, now - catchTime);
                     for (StackTraceElement ste : tis[i].getStackTrace()) {
                         logger.info("at {}", ste);
                     }
