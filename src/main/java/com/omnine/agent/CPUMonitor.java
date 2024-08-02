@@ -44,6 +44,13 @@ public class CPUMonitor {
     int concern = 0;
 
     private static final DecimalFormat decimalFormat = new DecimalFormat("#.###");
+    private static String repeat(String str, int times) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < times; i++) {
+            sb.append(str);
+        }
+        return sb.toString();
+    }
 
     public CPUMonitor() {
         this.osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
@@ -100,6 +107,7 @@ public class CPUMonitor {
                             try {
                                 captureThreadDump(Thread.currentThread().getId());
                                 concern = 0;    // reset
+                                bAlarmOn = false;
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -170,8 +178,11 @@ public class CPUMonitor {
                 if (percent > 0)    // only check the increase
                 {
                     logger.info("[{}%] \"{}\" #{}  cpu={}ms elapsed={}ms", decimalFormat.format(percent), tis[i].getThreadName(), id, (current-prev)/1000000, now - catchTime);
+                    int depth = 1;
                     for (StackTraceElement ste : tis[i].getStackTrace()) {
-                        logger.info("at {}", ste);
+                        String indent = repeat(" ", depth * 2);  // Using 2 spaces for each level of indentation
+                        logger.info("{}at {}", indent, ste);
+                        depth++;
                     }
                 }
             }
