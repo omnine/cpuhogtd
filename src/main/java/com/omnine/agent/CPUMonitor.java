@@ -31,11 +31,14 @@ public class CPUMonitor {
     private boolean bAlarmOn = false;
 
     private double lastProcessCpuLoad = -1;
+    private long cpus = 0;
 
-    static Map<Long, Long> cpuTimes = new HashMap<>();
-    static Map<Long, Long> lastCPUTimes = new HashMap<>();
-    static Map<Long, Long> cpuTimeFetch = new HashMap<>();
-    static Map<Long, Long> lastCPUTimeFetch = new HashMap<>();
+    Map<Long, Long> cpuTimes = new HashMap<>();
+    Map<Long, Long> lastCPUTimes = new HashMap<>();
+    Map<Long, Long> cpuTimeFetch = new HashMap<>();
+    Map<Long, Long> lastCPUTimeFetch = new HashMap<>();
+
+    ThreadMXBean threadMxBean;
 
     
     int concern = 0;
@@ -60,6 +63,18 @@ public class CPUMonitor {
     }
 
     public void startMonitoring() {
+        threadMxBean = ManagementFactory.getThreadMXBean();
+        // Check and enable CPU time measurement if supported
+        if (threadMxBean.isThreadCpuTimeSupported()) {
+            threadMxBean.setThreadCpuTimeEnabled(true);
+        }
+        else {
+            logger.warn("Thread CPU time measurement is not supported.");
+            return;
+        }
+
+
+        cpus = Runtime.getRuntime().availableProcessors();
         new Thread(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted() && running) {
@@ -114,20 +129,7 @@ public class CPUMonitor {
         running = false; // Step 3: Stop the monitoring
 
     }
-    private static void captureThreadDump(long idMonitorThread) throws IOException {
-        ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
-        // Check and enable CPU time measurement if supported
-        if (threadMxBean.isThreadCpuTimeSupported()) {
-            threadMxBean.setThreadCpuTimeEnabled(true);
-        }
-        else {
-            logger.warn("Thread CPU time measurement is not supported.");
-        }
-
-        long cpus = Runtime.getRuntime().availableProcessors();
-
-
-
+    private void captureThreadDump(long idMonitorThread) throws IOException {
         ThreadInfo[] tis = threadMxBean.dumpAllThreads(false, false);
 
         for (int i = 0; i < tis.length; i++) 
@@ -161,7 +163,7 @@ public class CPUMonitor {
                 long catchTime = (Long) lastCPUTimeFetch.get(idid);
 
                 System.out.println("current=" + current + " prev=" + prev); 
-                double percent = (current - prev) / ((now - catchTime) * cpus * 10000);
+                double percent = (current - prev) / ((now - catchTime) * cpus * 10000.0);
                 if (percent > 0)    // only check the increase
                 {
                     logger.info("[{}%] \"{}\" #{}  cpu={}ms elapsed={}ms", percent, tis[i].getThreadName(), id, (current-prev)/1000000, now - catchTime);
