@@ -24,8 +24,8 @@ public class CPUMonitor {
 
     private double CPU_THRESHOLD = 50.0;
     private long CHECK_INTERVAL_MS = 60000;	// 1 minute
-    private long AGGRESSIVE_INTERVAL_MS = 10000;	// 10 seconds
-    private double CONCERN_THRESHOLD = 12;	//	ABOUT last 2 minutes
+    private long AGGRESSIVE_INTERVAL_MS = 5000;	// 5 seconds, this should not be too big than 5 seconds
+    private double CONCERN_THRESHOLD = 6;	//	ABOUT last 30 seconds
     private final OperatingSystemMXBean osBean;
     private volatile boolean running = true; // Step 1: Volatile flag
     private boolean bAlarmOn = false;
@@ -68,14 +68,20 @@ public class CPUMonitor {
 
                     if (processCpuLoad >= CPU_THRESHOLD) {
                         bAlarmOn = true;
+                        concern++;
+                        //this condition may be too strict
+                        /*
                         if(processCpuLoad > lastProcessCpuLoad)
                         {
                             concern++;
                         }
+                         */
+
                         
                         if(concern >= CONCERN_THRESHOLD) {
                             try {
                                 captureThreadDump(Thread.currentThread().getId());
+                                concern = 0;    // reset
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -126,10 +132,14 @@ public class CPUMonitor {
 
         for (int i = 0; i < tis.length; i++) 
         {
-            if(tis[i].getThreadState() != Thread.State.RUNNABLE)
+            // As we compare the CPU time between two check points, we should not skip the threads that are not runnable.
+            /*
+             if(tis[i].getThreadState() != Thread.State.RUNNABLE)
             {
                 continue;
             }
+             */
+
 
 
             long id = tis[i].getThreadId();
@@ -149,6 +159,8 @@ public class CPUMonitor {
             {
                 long prev = (Long) lastCPUTimes.get(idid);
                 long catchTime = (Long) lastCPUTimeFetch.get(idid);
+
+                System.out.println("current=" + current + " prev=" + prev); 
                 double percent = (current - prev) / ((now - catchTime) * cpus * 10000);
                 if (percent > 0)    // only check the increase
                 {
