@@ -9,7 +9,7 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONObject;
@@ -42,6 +42,9 @@ public class CPUMonitor {
 
     
     int concern = 0;
+
+    private static final DecimalFormat decimalFormat = new DecimalFormat("#.###");
+
     public CPUMonitor() {
         this.osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
     }
@@ -79,7 +82,7 @@ public class CPUMonitor {
             try {
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
-                    logger.info("Current Process CPU Load: {}%", processCpuLoad);
+                    logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
 
                     if (processCpuLoad >= CPU_THRESHOLD) {
                         bAlarmOn = true;
@@ -166,7 +169,7 @@ public class CPUMonitor {
                 double percent = (current - prev) / ((now - catchTime) * cpus * 10000.0);
                 if (percent > 0)    // only check the increase
                 {
-                    logger.info("[{}%] \"{}\" #{}  cpu={}ms elapsed={}ms", percent, tis[i].getThreadName(), id, (current-prev)/1000000, now - catchTime);
+                    logger.info("[{}%] \"{}\" #{}  cpu={}ms elapsed={}ms", decimalFormat.format(percent), tis[i].getThreadName(), id, (current-prev)/1000000, now - catchTime);
                     for (StackTraceElement ste : tis[i].getStackTrace()) {
                         logger.info("at {}", ste);
                     }
