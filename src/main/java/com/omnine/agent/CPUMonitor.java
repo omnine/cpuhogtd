@@ -92,6 +92,13 @@ public class CPUMonitor {
                     logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
 
                     if (processCpuLoad >= CPU_THRESHOLD) {
+                        if(!bAlarmOn) {
+                            try {
+                                recording(Thread.currentThread().getId());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         bAlarmOn = true;
                         concern++;
                         //this condition may be too strict
@@ -202,4 +209,35 @@ public class CPUMonitor {
 
         System.out.println("Thread dump captured.");
     }    
+
+
+    private void recording(long idMonitorThread) throws IOException {
+        ThreadInfo[] tis = threadMxBean.dumpAllThreads(false, false);
+
+        for (int i = 0; i < tis.length; i++) 
+        {
+            long id = tis[i].getThreadId();
+            if(id == idMonitorThread)
+            {   // skip the monitoring thread
+                continue;
+            }
+
+            Long idid = new Long(id);
+            long current = threadMxBean.getThreadCpuTime(id);
+            if(current < 0)
+            {
+                continue;
+            }
+            long now = System.currentTimeMillis();
+            lastCPUTimes.put(idid, current);  // new
+            lastCPUTimeFetch.put(idid, now);
+        }
+
+
+
+        System.out.println("Start to record.");
+    }    
+
+
+
 }
