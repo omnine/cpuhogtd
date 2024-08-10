@@ -23,12 +23,19 @@ In order to test with [system-load-generator](https://github.com/pradykaushik/sy
 
 ```
 {
-	"CPU_THRESHOLD": 20,
+  "LateStart": 300000,
+  "IgnoreUnder": 5.0,
+	"CPU_THRESHOLD": 20.0,
 	"CHECK_INTERVAL_MS": 6000,
 	"AGGRESSIVE_INTERVAL_MS": 1000,
 	"CONCERN_THRESHOLD": 3
 }
 ```
+
+`LateStart`, the default value is `5` minutes (= 300,000 milliseconds). The monitoring will begin in this time after the targeted application starts up. Generally the start-up is CPU intensive, we can skip this period.
+
+`IgnoreUnder`, the default value is `5.0%`, The stack trace of the thread with CPU under this value will not be printed out.
+
 
 In order to simulate a real case, CPU spike, we can use https://github.com/msigwart/fakeload
 

@@ -26,6 +26,9 @@ public class CPUMonitor {
     private long CHECK_INTERVAL_MS = 60000;	// 1 minute
     private long AGGRESSIVE_INTERVAL_MS = 5000;	// 5 seconds, this should not be too big than 5 seconds
     private double CONCERN_THRESHOLD = 6;	//	ABOUT last 30 seconds
+    private long LateStart = 300000;	// 5 minutes
+    private double IgnoreUnder = 5.0;
+    private boolean PRINTSAMPCPU = false;
     private final OperatingSystemMXBean osBean;
     private volatile boolean running = true; // Step 1: Volatile flag
     private boolean bAlarmOn = false;
@@ -65,6 +68,23 @@ public class CPUMonitor {
             CHECK_INTERVAL_MS = json.getLong("CHECK_INTERVAL_MS");
             AGGRESSIVE_INTERVAL_MS = json.getLong("AGGRESSIVE_INTERVAL_MS");
             CONCERN_THRESHOLD = json.getDouble("CONCERN_THRESHOLD");
+
+            if(json.has("LateStart")) {
+                LateStart = json.getLong("LateStart");
+                if(LateStart < 0)
+                {
+                    LateStart = 0;
+                }
+            }
+
+            if (json.has("IgnoreUnder")) {
+                IgnoreUnder = json.getDouble("IgnoreUnder");
+                if(IgnoreUnder < 0.01)
+                {
+                    IgnoreUnder = 0.01;
+                }
+            }
+
         } catch (Exception e) {
 //            e.printStackTrace();
             // Handle error or set default values
@@ -73,6 +93,13 @@ public class CPUMonitor {
     }
 
     public void startMonitoring() {
+        try {
+            // Wait for the application to start
+            TimeUnit.MILLISECONDS.sleep(LateStart);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         threadMxBean = ManagementFactory.getThreadMXBean();
         // Check and enable CPU time measurement if supported
         if (threadMxBean.isThreadCpuTimeSupported()) {
@@ -85,13 +112,13 @@ public class CPUMonitor {
 
 
         cpus = Runtime.getRuntime().availableProcessors();
+        IgnoreUnder = IgnoreUnder / cpus;
         new Thread(() -> {
             try {
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
-                    logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
-
                     if (processCpuLoad >= CPU_THRESHOLD) {
+                        logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
                         if(!bAlarmOn) {
                             try {
                                 recording(Thread.currentThread().getId());
@@ -182,12 +209,12 @@ public class CPUMonitor {
 
                 System.out.println("current=" + current + " prev=" + prev); 
                 double percent = (current - prev) / ((now - catchTime) * cpus * 10000.0);
-                if (percent > 0)    // only check the increase
+                if (percent > IgnoreUnder)    // only check the increase
                 {
                     logger.info("[{}%] \"{}\" #{}  cpu={}ms elapsed={}ms", decimalFormat.format(percent), tis[i].getThreadName(), id, (current-prev)/1000000, now - catchTime);
                     int depth = 1;
                     for (StackTraceElement ste : tis[i].getStackTrace()) {
-                        String indent = repeat(" ", depth * 2);  // Using 2 spaces for each level of indentation
+                        String indent = repeat(" ", depth);  // Using 1 space for each level of indentation
                         logger.info("{}at {}", indent, ste);
                         depth++;
                     }
