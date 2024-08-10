@@ -6,10 +6,10 @@
 {
   "LateStart": 300000,
   "IgnoreUnder": 5.0,
-	"CPUThreshold": 60.0,
-	"CheckInterval": 60000,
-	"AggressiveInterval": 1000,
-	"ConcernThreshold": 10
+  "CPUThreshold": 60.0,
+  "CheckInterval": 60000,
+  "AggressiveInterval": 1000,
+  "ConcernThreshold": 10
 }
 ```
 
@@ -21,8 +21,8 @@
 
 `CheckInterval`, the default value is `60,000` ms (=1 minute). This has to be carefully selected. It is recommended as half of the peak range.
 
-`AggressiveInterval`: the default value is `1,000` ms (=1 sec).
-`ConcernThreshold`: the default value is `10`.
+`AggressiveInterval`: the default value is `1,000` ms (=1 sec).  
+`ConcernThreshold`: the default value is `10`.  
 These two are hard to pick. They depend on the peak pattern. Once the alarm is activated, the agent enters to the aggressive mode, check the CPU more frequently.The frequency will be once per second, and the concern will be added 1 up if the CPU is over the `CPUThreshold`. Once the total of the concern is equal to `ConcernThreshold`, The agent will dump the thread. 
 
 
