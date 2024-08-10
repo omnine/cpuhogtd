@@ -2,16 +2,29 @@
 
 ## config.json
 
-The default values are,
-
 ```
 {
-  "CPU_THRESHOLD": 50.0,
-  "CHECK_INTERVAL_MS": 60000,
-  "AGGRESSIVE_INTERVAL_MS": 10000,
-  "CONCERN_THRESHOLD": 12
+  "LateStart": 300000,
+  "IgnoreUnder": 5.0,
+	"CPUThreshold": 60.0,
+	"CheckInterval": 60000,
+	"AggressiveInterval": 1000,
+	"ConcernThreshold": 10
 }
 ```
+
+`LateStart`, the default value is `5` minutes (= 300,000 milliseconds). The monitoring will begin in this time after the targeted application starts up. Generally the start-up is CPU intensive, we can skip this period.
+
+`IgnoreUnder`, the default value is `5.0%`. The stack trace of the thread with CPU under this value will not be printed out.
+
+`CPUThreshold`, the default value is `60.0%`. The agent will activate the alarm when the CPU of the monitored process is over this amount. 
+
+`CheckInterval`, the default value is `60,000` ms (=1 minute). This has to be carefully selected. It is recommended as half of the peak range.
+
+`AggressiveInterval`: the default value is `1,000` ms (=1 sec).
+`ConcernThreshold`: the default value is `10`.
+These two are hard to pick. They depend on the peak pattern. Once the alarm is activated, the agent enters to the aggressive mode, check the CPU more frequently.The frequency will be once per second, and the concern will be added 1 up if the CPU is over the `CPUThreshold`. Once the total of the concern is equal to `ConcernThreshold`, The agent will dump the thread. 
+
 
 # How to test
 
@@ -21,20 +34,7 @@ In order to test with [system-load-generator](https://github.com/pradykaushik/sy
 
 `system-load-generator.bat --load-type cpuload`
 
-```
-{
-  "LateStart": 300000,
-  "IgnoreUnder": 5.0,
-	"CPU_THRESHOLD": 20.0,
-	"CHECK_INTERVAL_MS": 6000,
-	"AGGRESSIVE_INTERVAL_MS": 1000,
-	"CONCERN_THRESHOLD": 3
-}
-```
 
-`LateStart`, the default value is `5` minutes (= 300,000 milliseconds). The monitoring will begin in this time after the targeted application starts up. Generally the start-up is CPU intensive, we can skip this period.
-
-`IgnoreUnder`, the default value is `5.0%`, The stack trace of the thread with CPU under this value will not be printed out.
 
 
 In order to simulate a real case, CPU spike, we can use https://github.com/msigwart/fakeload

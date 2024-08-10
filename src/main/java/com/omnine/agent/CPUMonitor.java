@@ -22,10 +22,10 @@ import org.slf4j.Logger;
 public class CPUMonitor {
     private static final Logger logger = LoggerFactory.getLogger(CPUMonitor.class); 
 
-    private double CPU_THRESHOLD = 50.0;
-    private long CHECK_INTERVAL_MS = 60000;	// 1 minute
-    private long AGGRESSIVE_INTERVAL_MS = 5000;	// 5 seconds, this should not be too big than 5 seconds
-    private double CONCERN_THRESHOLD = 6;	//	ABOUT last 30 seconds
+    private double CPUThreshold = 60.0;
+    private long CheckInterval = 60000;	// 1 minute
+    private long AggressiveInterval = 1000;	// 1 second
+    private int ConcernThreshold = 10;	//	ABOUT last 10 seconds
     private long LateStart = 300000;	// 5 minutes
     private double IgnoreUnder = 5.0;
     private boolean PRINTSAMPCPU = false;
@@ -64,10 +64,23 @@ public class CPUMonitor {
             String content = new String(Files.readAllBytes(Paths.get(jarDir + "/config.json")));
             JSONObject json = new JSONObject(content);
 
-            CPU_THRESHOLD = json.getDouble("CPU_THRESHOLD");
-            CHECK_INTERVAL_MS = json.getLong("CHECK_INTERVAL_MS");
-            AGGRESSIVE_INTERVAL_MS = json.getLong("AGGRESSIVE_INTERVAL_MS");
-            CONCERN_THRESHOLD = json.getDouble("CONCERN_THRESHOLD");
+            if(json.has("CPUThreshold")) {
+                CPUThreshold = json.getDouble("CPUThreshold");
+            }
+
+            if(json.has("CheckInterval")) {
+                CheckInterval = json.getLong("CheckInterval");
+            }
+
+            if(json.has("AggressiveInterval")) {
+                AggressiveInterval = json.getLong("AggressiveInterval");
+            }
+
+            if(json.has("ConcernThreshold")){
+                ConcernThreshold = json.getInt("ConcernThreshold");
+            }
+
+
 
             if(json.has("LateStart")) {
                 LateStart = json.getLong("LateStart");
@@ -117,7 +130,7 @@ public class CPUMonitor {
             try {
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
-                    if (processCpuLoad >= CPU_THRESHOLD) {
+                    if (processCpuLoad >= CPUThreshold) {
                         logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
                         if(!bAlarmOn) {
                             try {
@@ -137,7 +150,7 @@ public class CPUMonitor {
                          */
 
                         
-                        if(concern >= CONCERN_THRESHOLD) {
+                        if(concern >= ConcernThreshold) {
                             try {
                                 captureThreadDump(Thread.currentThread().getId());
                                 concern = 0;    // reset
@@ -155,10 +168,10 @@ public class CPUMonitor {
                     lastProcessCpuLoad = processCpuLoad;
                     
                     if(bAlarmOn) {	// check it more aggressively
-                        TimeUnit.MILLISECONDS.sleep(AGGRESSIVE_INTERVAL_MS);
+                        TimeUnit.MILLISECONDS.sleep(AggressiveInterval);
                     }
                     else {
-                        TimeUnit.MILLISECONDS.sleep(CHECK_INTERVAL_MS);
+                        TimeUnit.MILLISECONDS.sleep(CheckInterval);
                     }
 
 
