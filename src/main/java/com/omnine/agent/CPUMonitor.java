@@ -106,13 +106,6 @@ public class CPUMonitor {
     }
 
     public void startMonitoring() {
-        try {
-            // Wait for the application to start
-            TimeUnit.MILLISECONDS.sleep(LateStart);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         threadMxBean = ManagementFactory.getThreadMXBean();
         // Check and enable CPU time measurement if supported
         if (threadMxBean.isThreadCpuTimeSupported()) {
@@ -126,8 +119,10 @@ public class CPUMonitor {
 
         cpus = Runtime.getRuntime().availableProcessors();
         IgnoreUnder = IgnoreUnder / cpus;
-        new Thread(() -> {
+        new Thread(() -> {          
             try {
+                TimeUnit.MILLISECONDS.sleep(LateStart);
+
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
                     if (processCpuLoad >= CPUThreshold) {
