@@ -102,11 +102,15 @@ The `config.json` used in this test is,
 }
 ```
 
-You can also test the agent with [system-load-generator](https://github.com/pradykaushik/system-load-generator) was very helpful for this project during the development. However it can only be run on LINUX, as it used `lscpu`, I forked it at https://github.com/omnine/system-load-generator/tree/develop.
+You can also test this agent with [system-load-generator](https://github.com/pradykaushik/system-load-generator). Actually I used it to develop this project. 
 
- You need to reduce the intervals.
+It can only be run on LINUX, as it used `lscpu`, so I forked it at https://github.com/omnine/system-load-generator/tree/develop.
+
+I used its scenario, `cpuload`.
 
 `system-load-generator.bat --load-type cpuload`
+
+Obviously you need to adjust its configuration to match `config.json` used by this project.
 
 ## Usage
 
