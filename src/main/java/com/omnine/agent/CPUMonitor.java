@@ -127,11 +127,12 @@ public class CPUMonitor {
 
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
-                    if(OutputCPU) {
+                    if(OutputCPU && !bAlarmOn) {
                         logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
                     }
                     if (processCpuLoad >= CPUThreshold) {
                         if(!bAlarmOn) {
+                            logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
                             try {
                                 recording(Thread.currentThread().getId());
                             } catch (IOException e) {
