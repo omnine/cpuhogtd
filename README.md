@@ -1,10 +1,12 @@
 # cpuhogtd (CPU Hog Thread Dump)
 
-Why we need such an agent? With JDK you can use `jstack` to dump the threads. Without JDK (use JRE instead), you can use something like [glowroot](https://github.com/glowroot/glowroot). However in some situation,  the application becomes totally unresponsive after CPU hogs for a few minutes. After that time,  glowroot web UI cannot be accessible either. It is also too late if you can other tools like `jstack`.
+Why we need such an agent?  
+With JDK we can use `jstack` to dump the threads. With JRE, we can use some third-party library like [glowroot](https://github.com/glowroot/glowroot).  
+However, the application may become totally unresponsive after CPU hog for a few minutes. In some situation,  glowroot web UI cannot be accessed either. It is also too late if you use other tools like `jstack`.
 
-Also the CPU spike can happen at any time. It could be too late when you realize it and try to intervene.
+Also the CPU hog can happen at any time. It is very likely that it is too late when you realize it and try to intervene.
 
-The agent tried to dump the thread before the application (process) becomes unresponsive. Obviously you need to adjust the following configuration for your own situation.
+This agent tries to dump the threads before the application (process) becomes unresponsive. 
 
 ## config.json
 
@@ -20,35 +22,37 @@ The agent tried to dump the thread before the application (process) becomes unre
 }
 ```
 
-`LateStart`, the default value is `5` minutes (= 300,000 milliseconds). The monitoring will begin in this time after the targeted application starts up. Generally the start-up is CPU intensive, we can skip this period.
+`LateStart`, the default value is `5` minutes (= `300,000` milliseconds). The monitoring will begin `5` minutes after the targeted application starts up. Generally the start-up is also CPU intensive, but we are not interested in this part, so we should skip it.
 
-`IgnoreUnder`, the default value is `5.0%`. The stack trace of the thread with CPU under this value will not be printed out.
+`IgnoreUnder`, the default value is `5.0%`. Some threads may run at the same time but with tiny CPU. We can ignore them and focus on the main ones. The stack trace of these threads with CPU under this value will not be logged.
 
 `CPUThreshold`, the default value is `60.0%`. The agent will activate the alarm when the CPU of the monitored process is over this amount. 
 
-`CheckInterval`, the default value is `60,000` ms (=1 minute). This has to be carefully selected. It is recommended as half of the peak range.
+`CheckInterval`, the default value is `60,000` ms (=1 minute). This has to be carefully selected. It is recommended to be half of the peak range or smaller.
 
 `AggressiveInterval`: the default value is `1,000` ms (=1 sec).  
+Once the alarm is activated, the agent enters to the aggressive mode, check the CPU more frequently.As you can imagine, `AggressiveInterval` should be much less than `CheckInterval`.
+
 `ConcernThreshold`: the default value is `10`.  
-These two are hard to pick. They depend on the peak pattern. Once the alarm is activated, the agent enters to the aggressive mode, check the CPU more frequently.The frequency will be once per second, and the concern will be added 1 up if the CPU is over the `CPUThreshold`. Once the total of the concern is equal to `ConcernThreshold`, The agent will dump the thread. 
+In the aggressive mode, the concern will be added 1 up if the CPU is over the `CPUThreshold`. Once the total of the concern is equal to `ConcernThreshold`, The agent will try to dump the thread. 
 
-`OutputCPU`: the default value is `false`. If you want to output the process CPU at each check point, change it to `true`.
+`OutputCPU`: the default value is `false`. If you want to output the process CPU at each check point spaced with `CheckInterval`, change it to `true`.
 
 
-With the *Gauge* in glowroot, you can analyze the pattern, then decide the values on the `config.json`.
+With the CPU  *Gauge* in glowroot, you can analyze the pattern, then decide the values inside the `config.json`.
 
 ![Glowroot-CPU-Gauge](./doc/glowroot-cpu-gauge.png)
 
-As you can see, normally the CPU usage was under `40%`. The peak (over 80%) lasted about 10-15 minutes.
+For this example, normally the CPU usage was under `40%`. The peak (over 80%) lasted about 10-15 minutes.
 
 In this case,  `CheckInterval` can be set as big as `5` minutes (half of `10`).
 
 # How to test
 
-In order to simulate a real case, CPU spike, we can use https://github.com/msigwart/fakeload in your JAVA application.
-Here I tried it in **DualShield**, a commercial MFA product which can call groovy script in its *Task*.
+In order to simulate a real case, CPU spike, we can use [FakeLoad](https://github.com/msigwart/fakeload) in your JAVA application.
+I tried it in [DualShield](https://web.deepnetsecurity.com/products/dualshield/), a commercial MFA product which can call groovy script in its *Task*.
 
-Download the `fakeload-0.7.0.jar` at https://repo1.maven.org/maven2/com/martensigwart/fakeload/0.7.0/fakeload-0.7.0.jar. Put it into the folder,
+Download the `fakeload-0.7.0.jar` at https://repo1.maven.org/maven2/com/martensigwart/fakeload/0.7.0/fakeload-0.7.0.jar. Put it into this folder,
 `C:\Program Files\Deepnet DualShield\tomcat\dualapp\das5\WEB-INF\lib`, then restart the service.
 
 Create a task,
@@ -67,7 +71,7 @@ executor.execute(fakeload);
 
 ```
 
-Then run it, you should get the similar result. I had 2 CPU cores on the VM, that is why you see `34.499`, as `34.499*2 = 69`, it is close to `70` we set in the task.
+Then run it, you should get the similar result. 
 
 ```
 2024-08-10 22:43:49,311 INFO [Thread-0] c.o.a.CPUMonitor [CPUMonitor.java:227] [34.499%] "pool-13-thread-3" #206  cpu=3484ms elapsed=5050ms
@@ -88,6 +92,7 @@ Then run it, you should get the similar result. I had 2 CPU cores on the VM, tha
 2024-08-10 22:43:49,311 INFO [Thread-0] c.o.a.CPUMonitor [CPUMonitor.java:231]        at java.lang.Thread.run(Thread.java:750)
 
 ```
+I had 2 CPU cores on the VM, that is why you see `34.499`, as `34.499*2 = 69`, it is close to `70` we set in the task.
 
 The `config.json` used in this test is,
 
