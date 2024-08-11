@@ -28,7 +28,7 @@ public class CPUMonitor {
     private int ConcernThreshold = 10;	//	ABOUT last 10 seconds
     private long LateStart = 300000;	// 5 minutes
     private double IgnoreUnder = 5.0;
-    private boolean PRINTSAMPCPU = false;
+    private boolean OutputCPU = false;
     private final OperatingSystemMXBean osBean;
     private volatile boolean running = true; // Step 1: Volatile flag
     private boolean bAlarmOn = false;
@@ -80,7 +80,9 @@ public class CPUMonitor {
                 ConcernThreshold = json.getInt("ConcernThreshold");
             }
 
-
+            if(json.has("OutputCPU")){
+                OutputCPU = json.getBoolean("OutputCPU");
+            }
 
             if(json.has("LateStart")) {
                 LateStart = json.getLong("LateStart");
@@ -125,8 +127,10 @@ public class CPUMonitor {
 
                 while (!Thread.currentThread().isInterrupted() && running) {
                     double processCpuLoad = osBean.getProcessCpuLoad() * 100;
-                    if (processCpuLoad >= CPUThreshold) {
+                    if(OutputCPU) {
                         logger.info("Current Process CPU Load: {}%", decimalFormat.format(processCpuLoad));
+                    }
+                    if (processCpuLoad >= CPUThreshold) {
                         if(!bAlarmOn) {
                             try {
                                 recording(Thread.currentThread().getId());
