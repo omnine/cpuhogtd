@@ -1,5 +1,11 @@
 # cpuhogtd (CPU Hog Thread Dump)
 
+Why we need such an agent? With JDK you can use `jstack` to dump the threads. Without JDK (use JRE instead), you can use something like [glowroot](https://github.com/glowroot/glowroot). However in some situation,  the application becomes totally unresponsive after CPU hogs for a few minutes. After that time,  glowroot web UI cannot be accessible either. It is also too late if you can other tools like `jstack`.
+
+Also the CPU spike can happen at any time. It could be too late when you realize it and try to intervene.
+
+The agent tried to dump the thread before the application (process) becomes unresponsive. Obviously you need to adjust the following configuration for your own situation.
+
 ## config.json
 
 ```
@@ -29,16 +35,15 @@ These two are hard to pick. They depend on the peak pattern. Once the alarm is a
 `OutputCPU`: the default value is `false`. If you want to output the process CPU at each check point, change it to `true`.
 
 
+With the *Gauge* in glowroot, you can analyze the pattern, then decide the values on the `config.json`.
+
+![Glowroot-CPU-Gauge](./doc/glowroot-cpu-gauge.png)
+
+As you can see, normally the CPU usage was under `40%`. The peak (over 80%) lasted about 10-15 minutes.
+
+In this case,  `CheckInterval` can be set as big as `5` minutes (half of `10`).
+
 # How to test
-
-In order to test with [system-load-generator](https://github.com/pradykaushik/system-load-generator) was very helpful for this project during the development. However it can only be run on LINUX, as it used `lscpu`, I forked it at https://github.com/omnine/system-load-generator/tree/develop.
-
- You need to reduce the intervals.
-
-`system-load-generator.bat --load-type cpuload`
-
-
-
 
 In order to simulate a real case, CPU spike, we can use https://github.com/msigwart/fakeload in your JAVA application.
 Here I tried it in **DualShield**, a commercial MFA product which can call groovy script in its *Task*.
@@ -97,6 +102,11 @@ The `config.json` used in this test is,
 }
 ```
 
+You can also test the agent with [system-load-generator](https://github.com/pradykaushik/system-load-generator) was very helpful for this project during the development. However it can only be run on LINUX, as it used `lscpu`, I forked it at https://github.com/omnine/system-load-generator/tree/develop.
+
+ You need to reduce the intervals.
+
+`system-load-generator.bat --load-type cpuload`
 
 ## Usage
 
