@@ -1,7 +1,7 @@
 <configuration>
     <property name="LOG_DIR" value="${agent.jar.dir}"/>
     <appender name="FILE" class="com.omnine.agent.shaded.ch.qos.logback.core.FileAppender">
-        <file>${LOG_DIR}/threadbump.log</file>
+        <file>${LOG_DIR}/threaddump.log</file>
         <encoder>
             <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
         </encoder>
