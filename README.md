@@ -121,7 +121,7 @@ Obviously you need to adjust its configuration to match `config.json` used by th
 
 `-javaagent:path/to/cpuhogtd-1.0-SNAPSHOT.jar`
 
-During the test, I simply put the jar in the folder `c:\temp`,
+During the test, I simply put the jar in the folder `c:\temp\cpuhog`,
 
 `-javaagent:c:/temp/cpuhog/cpuhogtd-1.0-SNAPSHOT.jar`
 
