@@ -43,6 +43,14 @@
                   <shadedPattern>com.omnine.agent.shaded.org.objectweb</shadedPattern>
                 </relocation>
               </relocations>
+              <filters>
+                <filter>
+                  <artifact>ch.qos.logback:logback-classic</artifact>
+                  <excludes>
+                    <exclude>META-INF/services/javax.servlet.ServletContainerInitializer</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
